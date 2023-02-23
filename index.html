@@ -1,17 +1,124 @@
-<html>
+<!DOCTYPE html>
+<html lang="en">
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css"
+      integrity="sha384-HSMxcRTRxnN+Bdg0JdbxYKrThecOKuH5zCYotlSAcp1+c8xmyTe9GYg1l9a69psu"
+      crossorigin="anonymous"
+    />
+
+    <!-- Bootstrap theme -->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap-theme.min.css"
+      integrity="sha384-6pzBo3FDv/PJ8r2KRkGHifhEocL+1X2rVCTTkUfGk7/0pbek5mMa1upzvWbrUbOZ"
+      crossorigin="anonymous"
+    />
+
+    <style type="text/css">
+      body {
+        padding: 20px;
+      }
+      .results {
+        margin-top: 20px;
+      }
+    </style>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      let socket = io();
-      let el;
+      const main = () => {
+        const socket = io();
+        const yesBarEl = document.getElementById("yes-bar");
+        const noBarEl = document.getElementById("no-bar");
+        const yesCountEl = document.getElementById("yes-count");
+        const noCountEl = document.getElementById("no-count");
+        const totalCountEl = document.getElementById("total-count");
 
-      socket.on("time", (timeString) => {
-        el = document.getElementById("server-time");
-        el.innerHTML = "Server time: " + timeString;
-      });
+        if (localStorage.clientId == null) {
+          localStorage.clientId = Math.floor(Math.random() * 1000000);
+          console.log("Set new client id to " + localStorage.clientId);
+        }
+
+        socket.on("results", (results) => {
+          const { yesCount, noCount } = results;
+          const totalCount = yesCount + noCount;
+          const yesPercent =
+            totalCount === 0 ? 0 : Math.round((yesCount / totalCount) * 100);
+          const noPercent =
+            totalCount === 0 ? 0 : Math.round((noCount / totalCount) * 100);
+          console.log({ yesPercent });
+          yesBarEl.style.width = yesPercent + "%";
+          noBarEl.style.width = noPercent + "%";
+          yesCountEl.innerHTML = yesCount;
+          noCountEl.innerHTML = noCount;
+          totalCountEl.innerHTML = totalCount;
+        });
+
+        document.getElementById("yes").addEventListener("click", () => {
+          socket.emit("vote", localStorage.clientId, "yes");
+        });
+
+        document.getElementById("no").addEventListener("click", () => {
+          socket.emit("vote", localStorage.clientId, "no");
+        });
+
+        document.getElementById("reset").addEventListener("click", () => {
+          socket.emit("reset", localStorage.clientId);
+        });
+      };
+
+      document.addEventListener("DOMContentLoaded", main);
     </script>
   </head>
   <body>
-    <p id="server-time"></p>
+    <div class="container">
+      <div class="row">
+        <div class=".col-xs-12 .col-md-8">
+          <p>Continue the current topic for 5 more minutes?</p>
+          <button id="yes" class="btn btn-default">Yes</button>
+          <button id="no" class="btn btn-default">No</button>
+          <div class="results">
+            <div class="progress">
+              <div
+                id="yes-bar"
+                class="progress-bar progress-bar-success"
+                role="progressbar"
+                aria-valuenow="40"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                style="width: 0%"
+              >
+                Yes <span id="yes-count">0</span>
+              </div>
+            </div>
+            <div class="progress">
+              <div
+                id="no-bar"
+                class="progress-bar progress-bar-danger"
+                role="progressbar"
+                aria-valuenow="80"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                style="width: 0%"
+              >
+                No <span id="no-count">0</span>
+              </div>
+            </div>
+            <p>
+              Total Votes:
+              <span id="total-count">0</span>
+            </p>
+          </div>
+          <button id="reset" class="btn btn-default">Reset Votes</button>
+        </div>
+      </div>
+    </div>
   </body>
 </html>

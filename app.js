@@ -12,9 +12,27 @@ const server = express()
 
 const io = socketIO(server);
 
+let votesByClientId = {};
+
+const emitResults = (socket) => {
+  const votes = Object.values(votesByClientId);
+  const yesCount = votes.filter((x) => x === "yes").length;
+  const noCount = votes.filter((x) => x === "no").length;
+  (socket || io).emit("results", { yesCount, noCount });
+};
+
 io.on("connection", (socket) => {
   console.log("Client connected");
   socket.on("disconnect", () => console.log("Client disconnected"));
-});
+  emitResults(socket);
 
-setInterval(() => io.emit("time", new Date().toTimeString()), 1000);
+  socket.on("vote", (clientId, value) => {
+    votesByClientId[clientId] = value;
+    emitResults();
+  });
+
+  socket.on("reset", () => {
+    votesByClientId = {};
+    emitResults();
+  });
+});
