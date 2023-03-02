@@ -53,7 +53,6 @@
             totalCount === 0 ? 0 : Math.round((yesCount / totalCount) * 100);
           const noPercent =
             totalCount === 0 ? 0 : Math.round((noCount / totalCount) * 100);
-          console.log({ yesPercent });
           yesBarEl.style.width = yesPercent + "%";
           noBarEl.style.width = noPercent + "%";
           yesCountEl.innerHTML = yesCount;
